@@ -1,0 +1,2 @@
+1001;Schraube M8;120
+1002;Mutter M8;300

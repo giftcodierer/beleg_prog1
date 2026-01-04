@@ -108,73 +108,110 @@ static void on_search_changed(GtkEntry *e, gpointer d)
 void ui_start(MaterialListe *liste) {
     glob_liste = liste;
 
+// Initialize GTK window
     GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(win), "Materialverwaltung");
     gtk_window_set_default_size(GTK_WINDOW(win), 600, 400);
 
+// Create vertical box layout
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(win), vbox);
 
+// Create search entry
 	GtkWidget *search = gtk_search_entry_new();
 	g_signal_connect(search, "search-changed",
                  G_CALLBACK(on_search_changed), NULL);
-
 	gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 5);
-
-
+// Create menu bar
     GtkWidget *menubar = gtk_menu_bar_new();
+
+//Create menu and menu items
     GtkWidget *menu = gtk_menu_new();
     GtkWidget *item = gtk_menu_item_new_with_label("Artikel");
     GtkWidget *add = gtk_menu_item_new_with_label("Neu");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), menu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), add);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
-    gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
+/* Attach the submenu to the menu item */
+gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), menu);
 
-    g_signal_connect(add, "activate", G_CALLBACK(on_add), NULL);
+/* Add the "add" menu item to the submenu */
+gtk_menu_shell_append(GTK_MENU_SHELL(menu), add);
 
-    store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
-    filter = GTK_TREE_MODEL_FILTER(
+/* Add the menu item (with submenu) to the menu bar */
+gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
+
+/* Pack the menu bar at the top of the vertical box */
+gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
+
+/* Connect the "activate" signal of the menu item to the add callback */
+g_signal_connect(add, "activate", G_CALLBACK(on_add), NULL);
+
+
+/* Create the list store (model) with three columns:
+ *  - column 0: article number (int)
+ *  - column 1: article description (string)
+ *  - column 2: stock quantity (int)
+ */
+store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
+
+/* Create a filter model on top of the list store */
+filter = GTK_TREE_MODEL_FILTER(
     gtk_tree_model_filter_new(GTK_TREE_MODEL(store), NULL));
 
+/* Assign the filter function which decides which rows are visible */
 gtk_tree_model_filter_set_visible_func(
     filter, filter_func, NULL, NULL);
 
+/* Create the tree view using the filtered model */
 GtkWidget *tree =
     gtk_tree_view_new_with_model(GTK_TREE_MODEL(filter));
 
 
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-        gtk_tree_view_column_new_with_attributes(
-            "Nr", gtk_cell_renderer_text_new(), "text", 0, NULL));
+/* Create and append the column for the article number (read-only) */
+gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
+    gtk_tree_view_column_new_with_attributes(
+        "Nr", gtk_cell_renderer_text_new(), "text", 0, NULL));
 
-    GtkCellRenderer *r_text = gtk_cell_renderer_text_new();
+
+/* Create an editable text renderer for the article description */
+GtkCellRenderer *r_text = gtk_cell_renderer_text_new();
 g_object_set(r_text, "editable", TRUE, NULL);
+
+/* Connect the "edited" signal to update the underlying data */
 g_signal_connect(r_text, "edited",
                  G_CALLBACK(on_text_edited),
                  GINT_TO_POINTER(1));
 
+/* Append the description column to the tree view */
 gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
     gtk_tree_view_column_new_with_attributes(
         "Bezeichnung", r_text, "text", 1, NULL));
 
 
-    GtkCellRenderer *r_int = gtk_cell_renderer_text_new();
+/* Create an editable text renderer for the stock quantity */
+GtkCellRenderer *r_int = gtk_cell_renderer_text_new();
 g_object_set(r_int, "editable", TRUE, NULL);
+
+/* Connect the edit signal to update the stock value */
 g_signal_connect(r_int, "edited",
                  G_CALLBACK(on_int_edited),
                  NULL);
 
+/* Append the stock column to the tree view */
 gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
     gtk_tree_view_column_new_with_attributes(
         "Bestand", r_int, "text", 2, NULL));
 
 
-    gtk_box_pack_start(GTK_BOX(vbox), tree, TRUE, TRUE, 0);
+/* Pack the tree view so it fills the remaining window space */
+gtk_box_pack_start(GTK_BOX(vbox), tree, TRUE, TRUE, 0);
 
-    refresh_table();
+/* Populate the table with the current data */
+refresh_table();
 
-    g_signal_connect(win, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-    gtk_widget_show_all(win);
+/* Quit the GTK main loop when the window is closed */
+g_signal_connect(win, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+
+/* Make all widgets visible */
+gtk_widget_show_all(win);
+
 }

@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Initializes an empty material list
 void init_liste(MaterialListe *liste) {
     liste->items = NULL;
     liste->count = 0;
 }
 
+// Frees all memory associated with the material list
 void free_liste(MaterialListe *liste) {
     for (int i = 0; i < liste->count; i++) {
         free(liste->items[i].bezeichnung);
@@ -14,6 +16,7 @@ void free_liste(MaterialListe *liste) {
     free(liste->items);
 }
 
+// Adds a new material to the list
 void material_hinzufuegen(MaterialListe *liste,
                           const char *bez,
                           int nr,
@@ -30,6 +33,7 @@ void material_hinzufuegen(MaterialListe *liste,
     liste->count++;
 }
 
+// Deletes a material with the given article number from the list
 void material_loeschen(MaterialListe *liste, int nr) {
     for (int i = 0; i < liste->count; i++) {
         if (liste->items[i].artikelnummer == nr) {

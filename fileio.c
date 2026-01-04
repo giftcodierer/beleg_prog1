@@ -1,6 +1,7 @@
 #include "fileio.h"
 #include <stdio.h>
 
+//Loads material data from a file in a semicolon-separated format
 void daten_laden(const char *datei, MaterialListe *liste) {
     FILE *f = fopen(datei, "r");
     if (!f) return;
@@ -15,6 +16,7 @@ void daten_laden(const char *datei, MaterialListe *liste) {
     fclose(f);
 }
 
+//Saves the material list to a file in a semicolon-separated format
 void daten_speichern(const char *datei, MaterialListe *liste) {
     FILE *f = fopen(datei, "w");
     if (!f) return;

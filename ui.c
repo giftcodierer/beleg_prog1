@@ -4,6 +4,9 @@
 
 static MaterialListe *glob_liste;
 static GtkListStore *store;
+static GtkTreeModelFilter *filter;
+static char suchtext[256] = "";
+
 
 static void refresh_table() {
     gtk_list_store_clear(store);
@@ -65,6 +68,39 @@ static void on_int_edited(GtkCellRendererText *cell,
     gtk_tree_path_free(path);
 }
 
+static gboolean filter_func(GtkTreeModel *model,
+                            GtkTreeIter *iter,
+                            gpointer data)
+{
+    if (suchtext[0] == '\0')
+        return TRUE;
+
+    gchar *name;
+    gint nr;
+
+    gtk_tree_model_get(model, iter,
+                       0, &nr,
+                       1, &name,
+                       -1);
+
+    gboolean match =
+        g_strrstr(name, suchtext) != NULL ||
+        g_strrstr_printf("%d", nr, "%s", suchtext);
+
+    g_free(name);
+    return match;
+}
+
+static void on_search_changed(GtkEntry *e, gpointer d)
+{
+    const char *t = gtk_entry_get_text(e);
+    strncpy(suchtext, t, sizeof(suchtext) - 1);
+    suchtext[sizeof(suchtext) - 1] = '\0';
+
+    gtk_tree_model_filter_refilter(filter);
+}
+
+
 void ui_start(MaterialListe *liste) {
     glob_liste = liste;
 
@@ -74,6 +110,13 @@ void ui_start(MaterialListe *liste) {
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(win), vbox);
+
+	GtkWidget *search = gtk_search_entry_new();
+	g_signal_connect(search, "search-changed",
+                 G_CALLBACK(on_search_changed), NULL);
+
+	gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 5);
+
 
     GtkWidget *menubar = gtk_menu_bar_new();
     GtkWidget *menu = gtk_menu_new();
@@ -88,7 +131,15 @@ void ui_start(MaterialListe *liste) {
     g_signal_connect(add, "activate", G_CALLBACK(on_add), NULL);
 
     store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
-    GtkWidget *tree = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    filter = GTK_TREE_MODEL_FILTER(
+    gtk_tree_model_filter_new(GTK_TREE_MODEL(store), NULL));
+
+gtk_tree_model_filter_set_visible_func(
+    filter, filter_func, NULL, NULL);
+
+GtkWidget *tree =
+    gtk_tree_view_new_with_model(GTK_TREE_MODEL(filter));
+
 
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
         gtk_tree_view_column_new_with_attributes(

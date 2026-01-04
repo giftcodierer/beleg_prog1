@@ -26,6 +26,28 @@ static void on_add(GtkWidget *w, gpointer d) {
     refresh_table();
 }
 
+static void on_text_edited(GtkCellRendererText *cell,
+                           gchar *path_str,
+                           gchar *new_text,
+                           gpointer user_data)
+{
+    int column = GPOINTER_TO_INT(user_data);
+    GtkTreeIter iter;
+    GtkTreePath *path = gtk_tree_path_new_from_string(path_str);
+
+    gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+    gtk_list_store_set(store, &iter, column, new_text, -1);
+
+    int index = gtk_tree_path_get_indices(path)[0];
+    if (column == 1) {
+        free(glob_liste->items[index].bezeichnung);
+        glob_liste->items[index].bezeichnung = strdup(new_text);
+    }
+
+    gtk_tree_path_free(path);
+}
+
+
 void ui_start(MaterialListe *liste) {
     glob_liste = liste;
 

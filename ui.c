@@ -77,19 +77,23 @@ static gboolean filter_func(GtkTreeModel *model,
 
     gchar *name;
     gint nr;
+    char nr_str[32];
 
     gtk_tree_model_get(model, iter,
                        0, &nr,
                        1, &name,
                        -1);
 
+    snprintf(nr_str, sizeof(nr_str), "%d", nr);
+
     gboolean match =
         g_strrstr(name, suchtext) != NULL ||
-        g_strrstr_printf("%d", nr, "%s", suchtext);
+        g_strrstr(nr_str, suchtext) != NULL;
 
     g_free(name);
     return match;
 }
+
 
 static void on_search_changed(GtkEntry *e, gpointer d)
 {

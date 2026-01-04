@@ -47,6 +47,23 @@ static void on_text_edited(GtkCellRendererText *cell,
     gtk_tree_path_free(path);
 }
 
+static void on_int_edited(GtkCellRendererText *cell,
+                          gchar *path_str,
+                          gchar *new_text,
+                          gpointer user_data)
+{
+    int value = atoi(new_text);
+    GtkTreeIter iter;
+    GtkTreePath *path = gtk_tree_path_new_from_string(path_str);
+
+    gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+    gtk_list_store_set(store, &iter, 2, value, -1);
+
+    int index = gtk_tree_path_get_indices(path)[0];
+    glob_liste->items[index].bestand = value;
+
+    gtk_tree_path_free(path);
+}
 
 void ui_start(MaterialListe *liste) {
     glob_liste = liste;
@@ -77,13 +94,27 @@ void ui_start(MaterialListe *liste) {
         gtk_tree_view_column_new_with_attributes(
             "Nr", gtk_cell_renderer_text_new(), "text", 0, NULL));
 
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-        gtk_tree_view_column_new_with_attributes(
-            "Bezeichnung", gtk_cell_renderer_text_new(), "text", 1, NULL));
+    GtkCellRenderer *r_text = gtk_cell_renderer_text_new();
+g_object_set(r_text, "editable", TRUE, NULL);
+g_signal_connect(r_text, "edited",
+                 G_CALLBACK(on_text_edited),
+                 GINT_TO_POINTER(1));
 
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-        gtk_tree_view_column_new_with_attributes(
-            "Bestand", gtk_cell_renderer_text_new(), "text", 2, NULL));
+gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
+    gtk_tree_view_column_new_with_attributes(
+        "Bezeichnung", r_text, "text", 1, NULL));
+
+
+    GtkCellRenderer *r_int = gtk_cell_renderer_text_new();
+g_object_set(r_int, "editable", TRUE, NULL);
+g_signal_connect(r_int, "edited",
+                 G_CALLBACK(on_int_edited),
+                 NULL);
+
+gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
+    gtk_tree_view_column_new_with_attributes(
+        "Bestand", r_int, "text", 2, NULL));
+
 
     gtk_box_pack_start(GTK_BOX(vbox), tree, TRUE, TRUE, 0);
 

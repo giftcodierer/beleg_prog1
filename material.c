@@ -23,34 +23,41 @@ void free_liste(MaterialListe *liste) {
     free(liste->items);
 }
 
-// Adds a new material to the list
+/* Adds a new material to the list */
 void material_hinzufuegen(MaterialListe *liste,
                           const char *bez,
                           int nr,
                           int bestand) {
-    liste->items = realloc(liste->items,
+    Material *tmp = realloc(liste->items,
                             (liste->count + 1) * sizeof(Material));
+    if (!tmp) return;
+    liste->items = tmp;
 
     Material *m = &liste->items[liste->count];
     m->bezeichnung = malloc(strlen(bez) + 1);
     strcpy(m->bezeichnung, bez);
     m->artikelnummer = nr;
     m->bestand = bestand;
-
     liste->count++;
 }
 
-// Deletes a material with the given article number from the list
+/* Deletes a material with the given article number from the list */
 void material_loeschen(MaterialListe *liste, int nr) {
     for (int i = 0; i < liste->count; i++) {
         if (liste->items[i].artikelnummer == nr) {
             free(liste->items[i].bezeichnung);
-            for (int j = i; j < liste->count - 1; j++) {
+            for (int j = i; j < liste->count - 1; j++)
                 liste->items[j] = liste->items[j + 1];
-            }
             liste->count--;
-            liste->items = realloc(liste->items,
-                                   liste->count * sizeof(Material));
+
+            if (liste->count == 0) {
+                free(liste->items);
+                liste->items = NULL;
+            } else {
+                Material *tmp = realloc(liste->items,
+                                        liste->count * sizeof(Material));
+                if (tmp) liste->items = tmp;
+            }
             return;
         }
     }

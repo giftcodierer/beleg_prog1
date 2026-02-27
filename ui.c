@@ -20,15 +20,15 @@ static char           suchtext[256] = "";
 
 /* Converts each character of the input string to lowercase */
 static void str_to_lower(const char *in, char *out, size_t size) {
-    for (size_t i = 0; i < size - 1 && in[i]; i++)
+    size_t i;
+    for (i = 0; i < size - 1 && in[i]; i++)
         out[i] = tolower((unsigned char)in[i]);
-    out[strlen(in)] = '\0';
+    out[i] = '\0';
 }
 
 /* Clears and refills the table, only showing rows that match the search string */
 static void refresh_table() {
     gtk_list_store_clear(store);
-    material_sortieren(glob_liste);
 
     /* Sort alphabetically by name */
     for (int i = 0; i < glob_liste->count - 1; i++)
@@ -59,6 +59,15 @@ static void refresh_table() {
             1, glob_liste->items[i].bezeichnung,
             2, glob_liste->items[i].bestand, -1);
     }
+}
+
+/* Returns the next article number */
+static int next_artikelnummer() {
+    int max = 1000;
+    for (int i = 0; i < glob_liste->count; i++)
+        if (glob_liste->items[i].artikelnummer > max)
+            max = glob_liste->items[i].artikelnummer;
+    return max + 1;
 }
 
 /* Opens a dialog to enter a new article and adds it to the list */
@@ -94,10 +103,11 @@ static void on_add(GtkWidget *w, gpointer d) {
     gtk_widget_show_all(dialog);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK) {
-        const char *bez   = gtk_entry_get_text(GTK_ENTRY(ent_bez));
-        int          best = atoi(gtk_entry_get_text(GTK_ENTRY(ent_best)));
+        const char *bez  = gtk_entry_get_text(GTK_ENTRY(ent_bez));
+        int         best = atoi(gtk_entry_get_text(GTK_ENTRY(ent_best)));
         if (bez && bez[0] != '\0') {
-            material_hinzufuegen(glob_liste, bez, 1000 + glob_liste->count, best);
+            material_hinzufuegen(glob_liste, bez, next_artikelnummer(), best);
+            daten_speichern("data.txt", glob_liste);
             refresh_table();
         }
     }
@@ -114,6 +124,7 @@ static void on_remove(GtkWidget *w, gpointer d) {
     gint nr;
     gtk_tree_model_get(model, &iter, 0, &nr, -1);
     material_loeschen(glob_liste, nr);
+    daten_speichern("data.txt", glob_liste);
     refresh_table();
 }
 
@@ -127,6 +138,7 @@ static void on_text_edited(GtkCellRendererText *cell, gchar *path_str, gchar *ne
     gtk_list_store_set(store, &iter, 1, new_text, -1);
     Material *m = material_suchen(glob_liste, nr);
     if (m) { free(m->bezeichnung); m->bezeichnung = strdup(new_text); }
+    daten_speichern("data.txt", glob_liste);
     gtk_tree_path_free(path);
 }
 
@@ -141,6 +153,7 @@ static void on_int_edited(GtkCellRendererText *cell, gchar *path_str, gchar *new
     gtk_list_store_set(store, &iter, 2, value, -1);
     Material *m = material_suchen(glob_liste, nr);
     if (m) m->bestand = value;
+    daten_speichern("data.txt", glob_liste);
     gtk_tree_path_free(path);
 }
 

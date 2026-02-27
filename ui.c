@@ -147,15 +147,15 @@ void ui_start(MaterialListe *liste) {
     g_signal_connect(search, "search-changed", G_CALLBACK(on_search_changed), NULL);
     gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 5);
 
-    /* Menu bar with Wareneingang and Warenausgang */
-    GtkWidget *menubar  = gtk_menu_bar_new();
-    GtkWidget *btn_add  = gtk_menu_item_new_with_label("Wareneingang");
-    GtkWidget *btn_rem  = gtk_menu_item_new_with_label("Warenausgang");
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), btn_add);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), btn_rem);
-    gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
-    g_signal_connect(btn_add, "activate", G_CALLBACK(on_add), NULL);
-    g_signal_connect(btn_rem, "activate", G_CALLBACK(on_remove), NULL);
+    /* Toolbar with Wareneingang and Warenausgang buttons */
+    GtkWidget *toolbar  = gtk_toolbar_new();
+    GtkToolItem *btn_add = gtk_tool_button_new(NULL, "Wareneingang");
+    GtkToolItem *btn_rem = gtk_tool_button_new(NULL, "Warenausgang");
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_add, -1);
+    gtk_toolbar_insert(GTK_TOOLBAR(toolbar), btn_rem, -1);
+    gtk_box_pack_start(GTK_BOX(vbox), toolbar, FALSE, FALSE, 0);
+    g_signal_connect(btn_add, "clicked", G_CALLBACK(on_add), NULL);
+    g_signal_connect(btn_rem, "clicked", G_CALLBACK(on_remove), NULL);
 
     /* List store and tree view */
     store     = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);

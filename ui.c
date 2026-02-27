@@ -1,238 +1,150 @@
 #include "ui.h"
-#include "fileio.h"
+#include "material.h"
 #include <gtk/gtk.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 
-/* Global pointer to the material list */
 static MaterialListe *glob_liste;
+static GtkListStore  *store;
+static GtkWidget     *tree_view;
+static char           suchtext[256] = "";
 
-/* The GTK list store holding all article rows */
-static GtkListStore *store;
+/* Converts each character of the input string to lowercase */
+static void str_to_lower(const char *in, char *out, size_t size) {
+    for (size_t i = 0; i < size - 1 && in[i]; i++)
+        out[i] = tolower((unsigned char)in[i]);
+    out[strlen(in)] = '\0';
+}
 
-/* Filter model */
-static GtkTreeModelFilter *filter;
-
-/* Current search string entered by the user */
-static char suchtext[256] = "";
-
-
-/* Clears and refills the table with the sorted data from the material list */
+/* Clears and refills the table, only showing rows that match the search string */
 static void refresh_table() {
     gtk_list_store_clear(store);
     material_sortieren(glob_liste);
+    char such_lower[256];
+    str_to_lower(suchtext, such_lower, sizeof(such_lower));
 
     for (int i = 0; i < glob_liste->count; i++) {
+        char name_lower[256], nr_str[32], nr_lower[32];
+        str_to_lower(glob_liste->items[i].bezeichnung, name_lower, sizeof(name_lower));
+        snprintf(nr_str, sizeof(nr_str), "%d", glob_liste->items[i].artikelnummer);
+        str_to_lower(nr_str, nr_lower, sizeof(nr_lower));
+
+        if (suchtext[0] && !g_strrstr(name_lower, such_lower) && !g_strrstr(nr_lower, such_lower))
+            continue;
+
         GtkTreeIter iter;
         gtk_list_store_append(store, &iter);
         gtk_list_store_set(store, &iter,
             0, glob_liste->items[i].artikelnummer,
             1, glob_liste->items[i].bezeichnung,
-            2, glob_liste->items[i].bestand,
-            -1);
+            2, glob_liste->items[i].bestand, -1);
     }
 }
 
-/* Adds a new default article to the list and refreshes the table */
+/* Adds a new default article to the list */
 static void on_add(GtkWidget *w, gpointer d) {
-    material_hinzufuegen(glob_liste, "Neuer Artikel",
-                         1000 + glob_liste->count, 0);
+    material_hinzufuegen(glob_liste, "Neuer Artikel", 1000 + glob_liste->count, 0);
+    refresh_table();
+}
+
+/* Removes the selected article from the list */
+static void on_remove(GtkWidget *w, gpointer d) {
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) return;
+    gint nr;
+    gtk_tree_model_get(model, &iter, 0, &nr, -1);
+    material_loeschen(glob_liste, nr);
     refresh_table();
 }
 
 /* Called when a text cell is edited */
-static void on_text_edited(GtkCellRendererText *cell,
-                           gchar *path_str,
-                           gchar *new_text,
-                           gpointer user_data)
-{
-    int column = GPOINTER_TO_INT(user_data);
+static void on_text_edited(GtkCellRendererText *cell, gchar *path_str, gchar *new_text, gpointer d) {
     GtkTreeIter iter;
     GtkTreePath *path = gtk_tree_path_new_from_string(path_str);
-
     gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
-    gtk_list_store_set(store, &iter, column, new_text, -1);
-
-    int index = gtk_tree_path_get_indices(path)[0];
-    if (column == 1) {
-        free(glob_liste->items[index].bezeichnung);
-        glob_liste->items[index].bezeichnung = strdup(new_text);
-    }
-
-    gtk_tree_path_free(path);
-}
-
-/* Called when the stock is edited */
-static void on_int_edited(GtkCellRendererText *cell,
-                          gchar *path_str,
-                          gchar *new_text,
-                          gpointer user_data)
-{
-    int value = atoi(new_text);
-    GtkTreeIter iter;
-    GtkTreePath *path = gtk_tree_path_new_from_string(path_str);
-
-    gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
-    gtk_list_store_set(store, &iter, 2, value, -1);
-
-    int index = gtk_tree_path_get_indices(path)[0];
-    glob_liste->items[index].bestand = value;
-
-    gtk_tree_path_free(path);
-}
-
-/* Converts each character of the input string to lowercase */
-static void str_to_lower(const char *input, char *output, size_t size) {
-    for (size_t i = 0; i < size - 1 && input[i] != '\0'; i++)
-        output[i] = tolower((unsigned char)input[i]);
-    output[strlen(input)] = '\0';
-}
-
-/* Returns TRUE if the row matches the current search string */
-static gboolean filter_func(GtkTreeModel *model,
-                            GtkTreeIter *iter,
-                            gpointer data)
-{
-    if (suchtext[0] == '\0')
-        return TRUE;
-
-    gchar *name;
     gint nr;
-    char nr_str[32];
-    char name_lower[256];
-    char such_lower[256];
-    char nr_lower[32];
-
-    gtk_tree_model_get(model, iter,
-                       0, &nr,
-                       1, &name,
-                       -1);
-
-    snprintf(nr_str, sizeof(nr_str), "%d", nr);
-
-    str_to_lower(name,     name_lower, sizeof(name_lower));
-    str_to_lower(suchtext, such_lower, sizeof(such_lower));
-    str_to_lower(nr_str,   nr_lower,   sizeof(nr_lower));
-
-    gboolean match =
-        g_strrstr(name_lower, such_lower) != NULL ||
-        g_strrstr(nr_lower,   such_lower) != NULL;
-
-    g_free(name);
-    return match;
+    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &nr, -1);
+    gtk_list_store_set(store, &iter, 1, new_text, -1);
+    Material *m = material_suchen(glob_liste, nr);
+    if (m) { free(m->bezeichnung); m->bezeichnung = strdup(new_text); }
+    gtk_tree_path_free(path);
 }
 
-
-/* Updates the search string and triggers a refilter of the table */
-static void on_search_changed(GtkEntry *e, gpointer d)
-{
-    const char *t = gtk_entry_get_text(e);
-    strncpy(suchtext, t, sizeof(suchtext) - 1);
-    suchtext[sizeof(suchtext) - 1] = '\0';
-
-    gtk_tree_model_filter_refilter(filter);
+/* Called when the stock value is edited */
+static void on_int_edited(GtkCellRendererText *cell, gchar *path_str, gchar *new_text, gpointer d) {
+    GtkTreeIter iter;
+    GtkTreePath *path = gtk_tree_path_new_from_string(path_str);
+    gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+    gint nr;
+    gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &nr, -1);
+    int value = atoi(new_text);
+    gtk_list_store_set(store, &iter, 2, value, -1);
+    Material *m = material_suchen(glob_liste, nr);
+    if (m) m->bestand = value;
+    gtk_tree_path_free(path);
 }
 
+/* Updates the search string and refreshes the table */
+static void on_search_changed(GtkEntry *e, gpointer d) {
+    strncpy(suchtext, gtk_entry_get_text(e), sizeof(suchtext) - 1);
+    refresh_table();
+}
 
 void ui_start(MaterialListe *liste) {
     glob_liste = liste;
 
-// Initialize GTK window
     GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(win), "Materialverwaltung");
     gtk_window_set_default_size(GTK_WINDOW(win), 600, 400);
 
-// Create vertical box layout
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(win), vbox);
 
-// Create search entry
-	GtkWidget *search = gtk_search_entry_new();
-	g_signal_connect(search, "search-changed",
-                 G_CALLBACK(on_search_changed), NULL);
-	gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 5);
-// Create menu bar
-    GtkWidget *menubar = gtk_menu_bar_new();
+    /* Search bar */
+    GtkWidget *search = gtk_search_entry_new();
+    g_signal_connect(search, "search-changed", G_CALLBACK(on_search_changed), NULL);
+    gtk_box_pack_start(GTK_BOX(vbox), search, FALSE, FALSE, 5);
 
-// Create "New Item" menu entry
-    GtkWidget *add = gtk_menu_item_new_with_label("Neu");
+    /* Menu bar with Wareneingang and Warenausgang */
+    GtkWidget *menubar  = gtk_menu_bar_new();
+    GtkWidget *btn_add  = gtk_menu_item_new_with_label("Wareneingang");
+    GtkWidget *btn_rem  = gtk_menu_item_new_with_label("Warenausgang");
+    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), btn_add);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), btn_rem);
+    gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
+    g_signal_connect(btn_add, "activate", G_CALLBACK(on_add), NULL);
+    g_signal_connect(btn_rem, "activate", G_CALLBACK(on_remove), NULL);
 
-/* Add  "new item"  to the menu bar */
-gtk_menu_shell_append(GTK_MENU_SHELL(menubar), add);
+    /* List store and tree view */
+    store     = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
+    tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
 
-/* Pack the menu bar at the top of the vertical box */
-gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
+    /* Article number column (read-only) */
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view),
+        gtk_tree_view_column_new_with_attributes("Nr",
+            gtk_cell_renderer_text_new(), "text", 0, NULL));
 
-/* Connect the "activate" signal of the menu item to the add callback */
-g_signal_connect(add, "activate", G_CALLBACK(on_add), NULL);
+    /* Editable description column */
+    GtkCellRenderer *r_text = gtk_cell_renderer_text_new();
+    g_object_set(r_text, "editable", TRUE, NULL);
+    g_signal_connect(r_text, "edited", G_CALLBACK(on_text_edited), NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view),
+        gtk_tree_view_column_new_with_attributes("Bezeichnung", r_text, "text", 1, NULL));
 
+    /* Editable stock column */
+    GtkCellRenderer *r_int = gtk_cell_renderer_text_new();
+    g_object_set(r_int, "editable", TRUE, NULL);
+    g_signal_connect(r_int, "edited", G_CALLBACK(on_int_edited), NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view),
+        gtk_tree_view_column_new_with_attributes("Bestand", r_int, "text", 2, NULL));
 
-/* Create the list store  with three columns:
- *  - column 0: article number
- *  - column 1: article description
- *  - column 2: stock quantity
- */
-store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
+    gtk_box_pack_start(GTK_BOX(vbox), tree_view, TRUE, TRUE, 0);
 
-/* Create a filter model on top of the list store */
-filter = GTK_TREE_MODEL_FILTER(
-    gtk_tree_model_filter_new(GTK_TREE_MODEL(store), NULL));
+    refresh_table();
 
-/* Assign the filter function which decides which rows are visible */
-gtk_tree_model_filter_set_visible_func(
-    filter, filter_func, NULL, NULL);
-
-/* Create the tree view using the filtered model */
-GtkWidget *tree =
-    gtk_tree_view_new_with_model(GTK_TREE_MODEL(filter));
-
-
-/* Create and append the column for the article number (read-only) */
-gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-    gtk_tree_view_column_new_with_attributes(
-        "Nr", gtk_cell_renderer_text_new(), "text", 0, NULL));
-
-
-/* Create an editable text renderer for the article description */
-GtkCellRenderer *r_text = gtk_cell_renderer_text_new();
-g_object_set(r_text, "editable", TRUE, NULL);
-
-/* Connect the "edited" signal to update the underlying data */
-g_signal_connect(r_text, "edited",
-                 G_CALLBACK(on_text_edited),
-                 GINT_TO_POINTER(1));
-
-/* Append the description column to the tree view */
-gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-    gtk_tree_view_column_new_with_attributes(
-        "Bezeichnung", r_text, "text", 1, NULL));
-
-
-/* Create an editable text renderer for the stock quantity */
-GtkCellRenderer *r_int = gtk_cell_renderer_text_new();
-g_object_set(r_int, "editable", TRUE, NULL);
-
-/* Connect the edit signal to update the stock value */
-g_signal_connect(r_int, "edited",
-                 G_CALLBACK(on_int_edited),
-                 NULL);
-
-/* Append the stock column to the tree view */
-gtk_tree_view_append_column(GTK_TREE_VIEW(tree),
-    gtk_tree_view_column_new_with_attributes(
-        "Bestand", r_int, "text", 2, NULL));
-
-
-/* Pack the tree view so it fills the remaining window space */
-gtk_box_pack_start(GTK_BOX(vbox), tree, TRUE, TRUE, 0);
-
-/* Populate the table with the current data */
-refresh_table();
-
-/* Quit the GTK main loop when the window is closed */
-g_signal_connect(win, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-
-/* Make all widgets visible */
-gtk_widget_show_all(win);
-
+    g_signal_connect(win, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    gtk_widget_show_all(win);
 }

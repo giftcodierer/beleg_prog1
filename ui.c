@@ -29,6 +29,17 @@ static void str_to_lower(const char *in, char *out, size_t size) {
 static void refresh_table() {
     gtk_list_store_clear(store);
     material_sortieren(glob_liste);
+
+    /* Sort alphabetically by name */
+    for (int i = 0; i < glob_liste->count - 1; i++)
+        for (int j = i + 1; j < glob_liste->count; j++)
+            if (strcmp(glob_liste->items[i].bezeichnung,
+                       glob_liste->items[j].bezeichnung) > 0) {
+                Material tmp = glob_liste->items[i];
+                glob_liste->items[i] = glob_liste->items[j];
+                glob_liste->items[j] = tmp;
+            }
+
     char such_lower[256];
     str_to_lower(suchtext, such_lower, sizeof(such_lower));
 

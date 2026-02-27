@@ -145,6 +145,7 @@ void ui_start(MaterialListe *liste) {
     main_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(main_win), "Materialverwaltung");
     gtk_window_set_default_size(GTK_WINDOW(main_win), 600, 400);
+    gtk_window_set_resizable(GTK_WINDOW(main_win), FALSE);
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add(GTK_CONTAINER(main_win), vbox);

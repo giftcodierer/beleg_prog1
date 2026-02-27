@@ -9,7 +9,10 @@
 * 2. fileio.c/h: Verantwortlich für das Laden und Speichern der Materialdaten in einer Textdatei. Die Daten werden im Format "Artikelnummer;Bezeichnung;Bestand" gespeichert.
 * 3. ui.c/h: Implementiert die grafische Benutzeroberfläche mit GTK.
 * Die Daten werden in der Textdatei "data.txt" im Format "Artikelnummer;Bezeichnung;Bestand" gespeichert.
-*
+*-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+* Durch anklicken eines Eintrages und darauffolgendem klicken auf Warenausgang wird der Datensatz entfernt.
+* Durch einen Doppelklick in die Spalte "Bezeichnung" oder "Bestand" kann der Eintrag bearbeitet werden.
+* Durch einen Klick auf Wareneingang öffnet sich ein Dialog, in dem man einen neuen Eintrag anlegen kann.
 */
 
 

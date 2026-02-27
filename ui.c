@@ -42,10 +42,48 @@ static void refresh_table() {
     }
 }
 
-/* Adds a new default article to the list */
+/* Opens a dialog to enter a new article and adds it to the list */
 static void on_add(GtkWidget *w, gpointer d) {
-    material_hinzufuegen(glob_liste, "Neuer Artikel", 1000 + glob_liste->count, 0);
-    refresh_table();
+    GtkWidget *dialog = gtk_dialog_new_with_buttons(
+        "Wareneingang",
+        NULL,
+        GTK_DIALOG_MODAL,
+        "OK",     GTK_RESPONSE_OK,
+        "Abbrechen", GTK_RESPONSE_CANCEL,
+        NULL);
+
+    GtkWidget *content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    GtkWidget *grid    = gtk_grid_new();
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 6);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 12);
+    gtk_container_set_border_width(GTK_CONTAINER(grid), 10);
+
+    /* Bezeichnung input */
+    GtkWidget *lbl_bez  = gtk_label_new("Bezeichnung:");
+    GtkWidget *ent_bez  = gtk_entry_new();
+    gtk_grid_attach(GTK_GRID(grid), lbl_bez, 0, 0, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), ent_bez, 1, 0, 1, 1);
+
+    /* Bestand input */
+    GtkWidget *lbl_best = gtk_label_new("Bestand:");
+    GtkWidget *ent_best = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(ent_best), "0");
+    gtk_grid_attach(GTK_GRID(grid), lbl_best, 0, 1, 1, 1);
+    gtk_grid_attach(GTK_GRID(grid), ent_best, 1, 1, 1, 1);
+
+    gtk_container_add(GTK_CONTAINER(content), grid);
+    gtk_widget_show_all(dialog);
+
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK) {
+        const char *bez   = gtk_entry_get_text(GTK_ENTRY(ent_bez));
+        int          best = atoi(gtk_entry_get_text(GTK_ENTRY(ent_best)));
+        if (bez && bez[0] != '\0') {
+            material_hinzufuegen(glob_liste, bez, 1000 + glob_liste->count, best);
+            refresh_table();
+        }
+    }
+
+    gtk_widget_destroy(dialog);
 }
 
 /* Removes the selected article from the list */

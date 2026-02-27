@@ -154,19 +154,11 @@ void ui_start(MaterialListe *liste) {
 // Create menu bar
     GtkWidget *menubar = gtk_menu_bar_new();
 
-//Create menu and menu items
-    GtkWidget *menu = gtk_menu_new();
-    GtkWidget *item = gtk_menu_item_new_with_label("Artikel");
     GtkWidget *add = gtk_menu_item_new_with_label("Neu");
 
-/* Attach the submenu to the menu item */
-gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), menu);
-
-/* Add the "add" menu item to the submenu */
-gtk_menu_shell_append(GTK_MENU_SHELL(menu), add);
-
-/* Add the menu item (with submenu) to the menu bar */
+/* Add both items directly to the menu bar */
 gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
+gtk_menu_shell_append(GTK_MENU_SHELL(menubar), add);
 
 /* Pack the menu bar at the top of the vertical box */
 gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);

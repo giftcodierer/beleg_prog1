@@ -1,3 +1,10 @@
+/*
+* Belegarbeit Programmieren 1, WS2025/26, Materialverwaltung
+* Name: Apel, Julian
+* Matrikelnummer: 57849
+* HTW-ID: s90353
+*/
+
 #include "fileio.h"
 #include <stdio.h>
 

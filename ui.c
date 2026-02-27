@@ -154,10 +154,10 @@ void ui_start(MaterialListe *liste) {
 // Create menu bar
     GtkWidget *menubar = gtk_menu_bar_new();
 
+// Create "New Item" menu entry
     GtkWidget *add = gtk_menu_item_new_with_label("Neu");
 
-/* Add both items directly to the menu bar */
-gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
+/* Add  "new item"  to the menu bar */
 gtk_menu_shell_append(GTK_MENU_SHELL(menubar), add);
 
 /* Pack the menu bar at the top of the vertical box */
@@ -167,10 +167,10 @@ gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, FALSE, 0);
 g_signal_connect(add, "activate", G_CALLBACK(on_add), NULL);
 
 
-/* Create the list store (model) with three columns:
- *  - column 0: article number (int)
- *  - column 1: article description (string)
- *  - column 2: stock quantity (int)
+/* Create the list store  with three columns:
+ *  - column 0: article number
+ *  - column 1: article description
+ *  - column 2: stock quantity
  */
 store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_STRING, G_TYPE_INT);
 

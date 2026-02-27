@@ -1,2 +1,40 @@
-1001;Schraube M8;120
-1002;Mutter M8;300
+1001;Widerstand 100 Ohm;500
+1002;Widerstand 220 Ohm;480
+1003;Widerstand 1 Kiloohm;600
+1004;Kondensator klein;350
+1005;Kondensator gross;200
+1006;LED rot;800
+1007;LED gruen;750
+1008;LED weiss;600
+1009;Lötkolben 30 Watt;25
+1010;Lötzinn Rolle;40
+1011;Entlötpumpe;30
+1012;Breadboard klein;45
+1013;Breadboard gross;20
+1014;Jumper-Kabel Set;60
+1015;USB-Kabel Typ A;120
+1016;USB-Kabel Typ C;150
+1017;HDMI-Kabel 2m;80
+1018;Netzwerkkabel 3m;90
+1019;Batterien AA 4er Pack;200
+1020;Batterien AAA 4er Pack;180
+1021;Knopfzelle 3V;300
+1022;Netzteil 5V;55
+1023;Netzteil 12V;40
+1024;Steckerleiste 3-fach;70
+1025;Steckerleiste 6-fach;50
+1026;Sicherung traege;250
+1027;Sicherung flink;220
+1028;Schrumpfschlauch Set;100
+1029;Platine Lochraster;85
+1030;Multimeter digital;15
+1031;Krokodilklemmen Set;60
+1032;Lüsterklemmen;140
+1033;Relais 5V;75
+1034;Taster klein;400
+1035;Kippschalter;180
+1036;Gehaeuse Kunststoff klein;35
+1037;Gehaeuse Kunststoff gross;20
+1038;Kabelbinder Set;300
+1039;Isolierband schwarz;120
+1040;Isolierband rot;90

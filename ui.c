@@ -8,6 +8,7 @@
 static MaterialListe *glob_liste;
 static GtkListStore  *store;
 static GtkWidget     *tree_view;
+static GtkWidget     *main_win;
 static char           suchtext[256] = "";
 
 /* Converts each character of the input string to lowercase */
@@ -46,9 +47,9 @@ static void refresh_table() {
 static void on_add(GtkWidget *w, gpointer d) {
     GtkWidget *dialog = gtk_dialog_new_with_buttons(
         "Wareneingang",
-        NULL,
-        GTK_DIALOG_MODAL,
-        "OK",     GTK_RESPONSE_OK,
+        GTK_WINDOW(main_win),
+        GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+        "OK",        GTK_RESPONSE_OK,
         "Abbrechen", GTK_RESPONSE_CANCEL,
         NULL);
 
@@ -134,12 +135,12 @@ static void on_search_changed(GtkEntry *e, gpointer d) {
 void ui_start(MaterialListe *liste) {
     glob_liste = liste;
 
-    GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(win), "Materialverwaltung");
-    gtk_window_set_default_size(GTK_WINDOW(win), 600, 400);
+    main_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(main_win), "Materialverwaltung");
+    gtk_window_set_default_size(GTK_WINDOW(main_win), 600, 400);
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_container_add(GTK_CONTAINER(win), vbox);
+    gtk_container_add(GTK_CONTAINER(main_win), vbox);
 
     /* Search bar */
     GtkWidget *search = gtk_search_entry_new();
@@ -183,6 +184,6 @@ void ui_start(MaterialListe *liste) {
 
     refresh_table();
 
-    g_signal_connect(win, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-    gtk_widget_show_all(win);
+    g_signal_connect(main_win, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    gtk_widget_show_all(main_win);
 }

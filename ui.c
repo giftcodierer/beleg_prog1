@@ -188,7 +188,12 @@ void ui_start(MaterialListe *liste) {
     gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view),
         gtk_tree_view_column_new_with_attributes("Bestand", r_int, "text", 2, NULL));
 
-    gtk_box_pack_start(GTK_BOX(vbox), tree_view, TRUE, TRUE, 0);
+    /* Wrap tree view in a scrollable window */
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
+        GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_container_add(GTK_CONTAINER(scroll), tree_view);
+    gtk_box_pack_start(GTK_BOX(vbox), scroll, TRUE, TRUE, 0);
 
     refresh_table();
 

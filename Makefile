@@ -1,5 +1,9 @@
+# Belegarbeit Programmieren 1, WS2025/26, Materialverwaltung
+# Name: Apel, Julian
+# Matrikelnummer: 57849
+# HTW-ID: s90353
 
-
+#Mit "make" compiliert das ganze Projekt, mit "make <name>" compiliert nur die angegebene Datei
 
 CC=gcc
 CFLAGS=`pkg-config --cflags gtk+-3.0` -Wall

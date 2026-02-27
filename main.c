@@ -3,7 +3,15 @@
 * Name: Apel, Julian
 * Matrikelnummer: 57849
 * HTW-ID: s90353
+*
+* Die Umsetzung erfolgte unter Verwendung der GTK-Bibliothek für die grafische Benutzeroberfläche. Es wurden drei Hauptmodule erstellt:
+* 1. material.c/h: Enthält die Definitionen für die Materialstruktur und Funktionen zur Verwaltung der Materialliste.
+* 2. fileio.c/h: Verantwortlich für das Laden und Speichern der Materialdaten in einer Textdatei. Die Daten werden im Format "Artikelnummer;Bezeichnung;Bestand" gespeichert.
+* 3. ui.c/h: Implementiert die grafische Benutzeroberfläche mit GTK.
+* Die Daten werden in der Textdatei "data.txt" im Format "Artikelnummer;Bezeichnung;Bestand" gespeichert.
+*
 */
+
 
 #include <gtk/gtk.h>
 #include "material.h"

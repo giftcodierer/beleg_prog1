@@ -1,13 +1,23 @@
 #include "ui.h"
 #include "fileio.h"
 #include <gtk/gtk.h>
+#include <ctype.h>
+#include <string.h>
 
+/* Global pointer to the material list */
 static MaterialListe *glob_liste;
+
+/* The GTK list store holding all article rows */
 static GtkListStore *store;
+
+/* Filter model */
 static GtkTreeModelFilter *filter;
+
+/* Current search string entered by the user */
 static char suchtext[256] = "";
 
 
+/* Clears and refills the table with the sorted data from the material list */
 static void refresh_table() {
     gtk_list_store_clear(store);
     material_sortieren(glob_liste);
@@ -23,12 +33,14 @@ static void refresh_table() {
     }
 }
 
+/* Adds a new default article to the list and refreshes the table */
 static void on_add(GtkWidget *w, gpointer d) {
     material_hinzufuegen(glob_liste, "Neuer Artikel",
                          1000 + glob_liste->count, 0);
     refresh_table();
 }
 
+/* Called when a text cell is edited */
 static void on_text_edited(GtkCellRendererText *cell,
                            gchar *path_str,
                            gchar *new_text,
@@ -50,6 +62,7 @@ static void on_text_edited(GtkCellRendererText *cell,
     gtk_tree_path_free(path);
 }
 
+/* Called when the stock is edited */
 static void on_int_edited(GtkCellRendererText *cell,
                           gchar *path_str,
                           gchar *new_text,
@@ -68,6 +81,14 @@ static void on_int_edited(GtkCellRendererText *cell,
     gtk_tree_path_free(path);
 }
 
+/* Converts each character of the input string to lowercase */
+static void str_to_lower(const char *input, char *output, size_t size) {
+    for (size_t i = 0; i < size - 1 && input[i] != '\0'; i++)
+        output[i] = tolower((unsigned char)input[i]);
+    output[strlen(input)] = '\0';
+}
+
+/* Returns TRUE if the row matches the current search string */
 static gboolean filter_func(GtkTreeModel *model,
                             GtkTreeIter *iter,
                             gpointer data)
@@ -78,6 +99,9 @@ static gboolean filter_func(GtkTreeModel *model,
     gchar *name;
     gint nr;
     char nr_str[32];
+    char name_lower[256];
+    char such_lower[256];
+    char nr_lower[32];
 
     gtk_tree_model_get(model, iter,
                        0, &nr,
@@ -86,15 +110,20 @@ static gboolean filter_func(GtkTreeModel *model,
 
     snprintf(nr_str, sizeof(nr_str), "%d", nr);
 
+    str_to_lower(name,     name_lower, sizeof(name_lower));
+    str_to_lower(suchtext, such_lower, sizeof(such_lower));
+    str_to_lower(nr_str,   nr_lower,   sizeof(nr_lower));
+
     gboolean match =
-        g_strrstr(name, suchtext) != NULL ||
-        g_strrstr(nr_str, suchtext) != NULL;
+        g_strrstr(name_lower, such_lower) != NULL ||
+        g_strrstr(nr_lower,   such_lower) != NULL;
 
     g_free(name);
     return match;
 }
 
 
+/* Updates the search string and triggers a refilter of the table */
 static void on_search_changed(GtkEntry *e, gpointer d)
 {
     const char *t = gtk_entry_get_text(e);
